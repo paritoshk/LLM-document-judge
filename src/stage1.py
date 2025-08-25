@@ -9,7 +9,16 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 from .json_utils import _first_top_level_json_block, _clean_json_minor_issues, _product_schema_block
+import logfire
 
+# Configure logfire
+LOGFIRE_TOKEN = os.getenv("LOGFIRE_TOKEN")
+if LOGFIRE_TOKEN:
+    logfire.configure(token=LOGFIRE_TOKEN)
+else:
+    logfire.configure()
+
+@logfire.instrument("stage1.extract_all_candidates")
 def extract_all_candidates(text: str, pdf_name: str) -> Tuple[str, str, List[dict]]:
     """Stage 1: Extract ALL product variants (high recall) and return (raw_text, parsed_block_str, items_list)."""
     

@@ -13,12 +13,21 @@ load_dotenv()
 from typing import List, Dict, Tuple
 from io import BytesIO
 import base64
+import logfire
+
+# Configure logfire
+LOGFIRE_TOKEN = os.getenv("LOGFIRE_TOKEN")
+if LOGFIRE_TOKEN:
+    logfire.configure(token=LOGFIRE_TOKEN)
+else:
+    logfire.configure()
 
 # Configuration
 USE_CACHE = True
 CACHE_DIR = Path("cache")
 CACHE_DIR.mkdir(exist_ok=True)
 
+@logfire.instrument("datalab.process")
 def process_with_datalab_cached(file_path: str) -> Dict:
     """Process PDF with Datalab, saving polling URL for resumption."""
     DATALAB_API_KEY = os.getenv("DATALAB_API_KEY")
@@ -103,6 +112,7 @@ def process_with_datalab_cached(file_path: str) -> Dict:
 
     raise TimeoutError("Datalab polling timeout")
 
+@logfire.instrument("text.extract")
 def extract_text_from_datalab(datalab_result: Dict) -> str:
     """Extract text from Datalab JSON."""
     full_text = ""
@@ -117,6 +127,7 @@ def extract_text_from_datalab(datalab_result: Dict) -> str:
         print(f"Text extraction error: {e}")
     return full_text
 
+@logfire.instrument("images.render")
 def pdf_to_images_cached(pdf_path: str, max_pages: int = 10) -> List[Tuple]:
     """Convert PDF to images using pdf2image."""
     cache_key = f"images_{Path(pdf_path).stem}.pkl"

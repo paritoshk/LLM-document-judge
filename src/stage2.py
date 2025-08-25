@@ -9,7 +9,16 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 from .json_utils import _first_top_level_json_block, _clean_json_minor_issues
+import logfire
 
+# Configure logfire
+LOGFIRE_TOKEN = os.getenv("LOGFIRE_TOKEN")
+if LOGFIRE_TOKEN:
+    logfire.configure(token=LOGFIRE_TOKEN)
+else:
+    logfire.configure()
+
+@logfire.instrument("stage2.judge_visual_selection")
 def judge_visual_selection(page_images: List[Tuple], all_candidates_text: str) -> Dict:
     """
     Stage 2: Pass raw 'all_candidates' string (unknown schema).

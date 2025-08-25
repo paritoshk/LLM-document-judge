@@ -19,6 +19,14 @@ from pathlib import Path
 from typing import List, Tuple, Dict, Any
 import gradio as gr
 import pandas as pd
+import logfire
+
+# Configure logfire
+LOGFIRE_TOKEN = os.getenv("LOGFIRE_TOKEN")
+if LOGFIRE_TOKEN:
+    logfire.configure(token=LOGFIRE_TOKEN)
+else:
+    logfire.configure()
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -314,6 +322,17 @@ def run_extraction_pipeline(pdf_file) -> Tuple[str, str, str, str, str, Any, Any
                     evaluation_results += f"**Predicted variants:** {predicted_variants}\n"
                     # Build plots comparing similarity/difference
                     fig_metrics, fig_status = _make_metric_plots(filename, products, expected[filename])
+                    
+                    # Log evaluation metrics to logfire for observability
+                    if not df_metrics.empty:
+                        logfire.log("eval.file",
+                                    file=filename,
+                                    precision=float(metrics['precision']),
+                                    recall=float(metrics['recall']),
+                                    f1=float(metrics['f1']),
+                                    tp=int(metrics['true_positives']),
+                                    fp=int(metrics['false_positives']),
+                                    fn=int(metrics['false_negatives']))
                 else:
                     evaluation_results += "No evaluation metrics available"
                     
